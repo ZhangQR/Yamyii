@@ -20,6 +20,8 @@ Material:
     serializedVersion: 3
     m_TexEnvs: []
     m_Floats:
-    - _Factor: 1
-    m_Colors: []
+    - _Factor: 3.94
+    - _WaterFogDensity: 0.59
+    m_Colors:
+    - _WaterFogColor: {r: 0.46698093, g: 0.9370034, b: 1, a: 1}
   m_BuildTextureStacks: []

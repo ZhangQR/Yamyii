@@ -6,11 +6,13 @@ Shader "URPPractice/Flow/Water"
         [MainColor] _BaseColor("Color", Color) = (1,1,1,1)
         _WaveA ("Wave A (dir, steepness(0,1), wavelength)", Vector) = (1,0,0.5,10)
         _WaveB ("Wave B", Vector) = (0,1,0.25,20)   // 两个波 steepness 不能超过 1
+        _WaterFogColor ("Water Fog Color", Color) = (0, 0, 0, 0)
+		_WaterFogDensity ("Water Fog Density", Range(0, 2)) = 0.1
     }
 
     SubShader
     {
-        Tags{"RenderType" = "Transparent" "RenderPipeline" = "UniversalPipeline" "IgnoreProjector" = "True" "ShaderModel"="4.5"}
+        Tags{"RenderType" = "Transparent" "Queue" = "Transparent" "RenderPipeline" = "UniversalPipeline" "IgnoreProjector" = "True" "ShaderModel"="4.5"}
         LOD 300
         Pass
         {
@@ -40,12 +42,14 @@ Shader "URPPractice/Flow/Water"
             #pragma multi_compile _ LIGHTMAP_ON
             #pragma multi_compile_fog
 
-            // #pragma enable_d3d11_debug_symbols
+            #pragma enable_d3d11_debug_symbols
 
             #pragma vertex WaterVertex
             #pragma fragment WaterFragment
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+			#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareOpaqueTexture.hlsl"
             #include "Shared/CustomInput.hlsl"
 
             struct Attributes
@@ -72,6 +76,8 @@ Shader "URPPractice/Flow/Water"
             float4 _MainTex_ST;
             half4 _BaseColor;
             float4 _WaveA,_WaveB,_WaveC,_WaveD;
+			float4 _WaterFogColor;
+            float _WaterFogDensity;
             CBUFFER_END
 
             void InitializeInputData(Varyings input, half3 normalTS, out SimpleInputData inputData)
@@ -172,41 +178,67 @@ Shader "URPPractice/Flow/Water"
 
                 SimpleInputData inputData;
                 InitializeInputData(input, surfaceData.normalTS, inputData);
-                return float4(surfaceData.albedo,_BaseColor.a);
+
+				// To calculate the UV coordinates for sampling the depth buffer,
+                // divide the pixel location by the render target resolution
+                // _ScaledScreenParams.
+                float2 UV = input.positionCS.xy / _ScaledScreenParams.xy;
+
+                // Sample the depth from the Camera depth texture.
+                #if UNITY_REVERSED_Z
+                    real depth = SampleSceneDepth(UV);
+                #else
+                    // Adjust Z to match NDC for OpenGL ([-1, 1])
+                        real depth = lerp(UNITY_NEAR_CLIP_VALUE, 1, SampleSceneDepth(UV));
+                #endif
+                depth = LinearEyeDepth(depth,_ZBufferParams);
+                //float waterDepth = UNITY_Z_0_FAR_FROM_CLIPSPACE(IN.positionHCS.z);
+                float waterDepth = LinearEyeDepth(lerp(UNITY_NEAR_CLIP_VALUE, 1, input.positionCS.z),_ZBufferParams);
+                float depthDifference = depth - waterDepth;
+            	//depthDifference/=20;
+
+                float4 backgroundColor = float4(SampleSceneColor(UV).xyz,1);
+                float fogFactor = exp2(-_WaterFogDensity * depthDifference);
+	            half3 color =lerp(_WaterFogColor, backgroundColor, fogFactor).xyz;
+                //half4 color = half4(depthDifference,depthDifference,depthDifference,0.1);
+                return half4(color,_BaseColor.a);
+                //return float4(depthDifference,depthDifference,depthDifference,1);
+            	//return float4(fogFactor,fogFactor,fogFactor,1);
+                //return float4(surfaceData.albedo,);
             }
 
             ENDHLSL
         }
-        Pass
-        {
-            Name "DepthOnly"
-            Tags{"LightMode" = "DepthOnly"}
-
-            ZWrite On
-            ColorMask 0
-            Cull[_Cull]
-
-            HLSLPROGRAM
-            #pragma exclude_renderers gles gles3 glcore
-            #pragma target 4.5
-
-            #pragma vertex DepthOnlyVertex
-            #pragma fragment DepthOnlyFragment
-
-            // -------------------------------------
-            // Material Keywords
-            #pragma shader_feature_local_fragment _ALPHATEST_ON
-            #pragma shader_feature_local_fragment _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
-
-            //--------------------------------------
-            // GPU Instancing
-            #pragma multi_compile_instancing
-            #pragma multi_compile _ DOTS_INSTANCING_ON
-
-            #include "Packages/com.unity.render-pipelines.universal/Shaders/LitInput.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/Shaders/DepthOnlyPass.hlsl"
-            ENDHLSL
-        }
+//        Pass
+//        {
+//            Name "DepthOnly"
+//            Tags{"LightMode" = "DepthOnly"}
+//
+//            ZWrite On
+//            ColorMask 0
+//            Cull[_Cull]
+//
+//            HLSLPROGRAM
+//            #pragma exclude_renderers gles gles3 glcore
+//            #pragma target 4.5
+//
+//            #pragma vertex DepthOnlyVertex
+//            #pragma fragment DepthOnlyFragment
+//
+//            // -------------------------------------
+//            // Material Keywords
+//            #pragma shader_feature_local_fragment _ALPHATEST_ON
+//            #pragma shader_feature_local_fragment _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
+//
+//            //--------------------------------------
+//            // GPU Instancing
+//            #pragma multi_compile_instancing
+//            #pragma multi_compile _ DOTS_INSTANCING_ON
+//
+//            #include "Packages/com.unity.render-pipelines.universal/Shaders/LitInput.hlsl"
+//            #include "Packages/com.unity.render-pipelines.universal/Shaders/DepthOnlyPass.hlsl"
+//            ENDHLSL
+//        }
 
     }
 

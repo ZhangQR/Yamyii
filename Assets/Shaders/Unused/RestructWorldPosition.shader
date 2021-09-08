@@ -94,17 +94,18 @@ Shader "Unused/URPReconstructWorldPos"
 
                 // Set the color to black in the proximity to the far clipping
                 // plane.
-                #if UNITY_REVERSED_Z
-                    // Case for platforms with REVERSED_Z, such as D3D.
-                    if(depth < 0.0001)
-                        return half4(0,0,0,1);
-                #else
-                    // Case for platforms without REVERSED_Z, such as OpenGL.
-                    if(depth > 0.9999)
-                        return half4(0,0,0,1);
-                #endif
+                // #if UNITY_REVERSED_Z
+                //     // Case for platforms with REVERSED_Z, such as D3D.
+                //     if(depth < 0.0001)
+                //         return half4(0,0,0,1);
+                // #else
+                //     // Case for platforms without REVERSED_Z, such as OpenGL.
+                //     if(depth > 0.9999)
+                //         return half4(0,0,0,1);
+                // #endif
 
                 return color;
+                //return  half4(depth,depth,depth,1);
             }
             ENDHLSL
         }
