@@ -23,18 +23,23 @@ Material:
         m_Texture: {fileID: 2800000, guid: aa9b43f87312b624fb2a4da82e378042, type: 3}
         m_Scale: {x: 0.2, y: 0.2}
         m_Offset: {x: 0, y: 0}
+    - _Environment:
+        m_Texture: {fileID: 8900000, guid: acd9afbf354f27041add63d936fcdb86, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _MainTex:
         m_Texture: {fileID: 2800000, guid: aa9b43f87312b624fb2a4da82e378042, type: 3}
         m_Scale: {x: 0.1, y: 0.1}
         m_Offset: {x: 0, y: 0}
     m_Floats:
+    - _Depth: 10
     - _Factor: 1
     - _Metallic: 0
     - _Smoothness: 0
-    - _WaterFogDensity: 0.01
+    - _WaterFogDensity: 0.51
     m_Colors:
-    - _BaseColor: {r: 0.7122642, g: 0.92176527, b: 1, a: 0.29803923}
-    - _WaterFogColor: {r: 0.108490564, g: 0.9341249, b: 1, a: 1}
-    - _WaveA: {r: 1, g: 0, b: 0.1, a: 8}
-    - _WaveB: {r: 1, g: -1, b: 3.2, a: 16}
+    - _BaseColor: {r: 0.7122642, g: 0.92176527, b: 1, a: 1}
+    - _WaterFogColor: {r: 0.48584908, g: 0.9898261, b: 1, a: 1}
+    - _WaveA: {r: 1, g: -0.5, b: 0.1, a: 200}
+    - _WaveB: {r: 0.3, g: -1, b: 0.1, a: 500}
   m_BuildTextureStacks: []

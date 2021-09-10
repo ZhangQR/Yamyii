@@ -1,0 +1,59 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 6
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: URPPractice_Flow_Water
+  m_Shader: {fileID: 4800000, guid: 8b1b2a383470ff14a981fe637ea6292d, type: 3}
+  m_ShaderKeywords: 
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _Environment:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MainTex:
+        m_Texture: {fileID: 2800000, guid: e1e59e51690ff0442b4d88a354393713, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Floats:
+    - _A: -0.02
+    - _Depth: 20
+    - _DepthHorizontal: 0.11
+    - _WaterFogDensity: 0.1
+    - _WaveCount: 1
+    m_Colors:
+    - _ALSS: {r: 1, g: 20, b: 0.25, a: 1}
+    - _ALSSA: {r: 1, g: 20, b: 0.25, a: 1}
+    - _ALSSB: {r: 1, g: 20, b: 0.25, a: 1}
+    - _ALSSC: {r: 1, g: 20, b: 0.25, a: 1}
+    - _ALSSD: {r: 1, g: 20, b: 0.25, a: 1}
+    - _ALSSWaveA: {r: 0.2, g: 200, b: 0.25, a: 142.2}
+    - _ALSSWaveB: {r: 0.4, g: 200, b: 0.5, a: 54.09}
+    - _ALSSWaveC: {r: 0, g: 64, b: 0.75, a: 10}
+    - _ALSSWaveD: {r: 0, g: 128, b: 1.5, a: 15}
+    - _ALSS_A: {r: 1, g: 20, b: 0.25, a: 1}
+    - _Amplitude: {r: 1, g: 1, b: 1, a: 1}
+    - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
+    - _HorizonColor: {r: 1, g: 0, b: 0, a: 1}
+    - _ShallowColor: {r: 1, g: 1, b: 1, a: 1}
+    - _Speed: {r: 0.5, g: 0.5, b: 0.5, a: 0.5}
+    - _Steepness: {r: 0.83, g: 0.25, b: 0.25, a: 0.25}
+    - _WaterFogColor: {r: 0, g: 0, b: 0, a: 0}
+    - _WaveA: {r: 1, g: 1, b: 0, a: 3.67}
+    - _WaveB: {r: 0, g: 1, b: 0.25, a: 20}
+    - _WaveDirAB: {r: -1, g: 0.36, b: -1, a: -1}
+    - _WaveDirCD: {r: 1, g: -0.5, b: 1, a: 30}
+    - _WaveLength: {r: 6.64, g: 10.53, b: 11.05, a: 0.5}
+  m_BuildTextureStacks: []

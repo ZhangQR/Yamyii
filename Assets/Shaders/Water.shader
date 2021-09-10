@@ -8,6 +8,8 @@ Shader "URPPractice/Flow/Water"
         _WaveB ("Wave B", Vector) = (0,1,0.25,20)   // 两个波 steepness 不能超过 1
         _WaterFogColor ("Water Fog Color", Color) = (0, 0, 0, 0)
 		_WaterFogDensity ("Water Fog Density", Range(0, 2)) = 0.1
+    	_Depth("Depth",float) = 20
+    	_Environment("Environment",Cube) = ""{}
     }
 
     SubShader
@@ -42,7 +44,7 @@ Shader "URPPractice/Flow/Water"
             #pragma multi_compile _ LIGHTMAP_ON
             #pragma multi_compile_fog
 
-            #pragma enable_d3d11_debug_symbols
+            //#pragma enable_d3d11_debug_symbols
 
             #pragma vertex WaterVertex
             #pragma fragment WaterFragment
@@ -71,13 +73,14 @@ Shader "URPPractice/Flow/Water"
             };
 
             TEXTURE2D(_MainTex);            SAMPLER(sampler_MainTex);
+            TEXTURECUBE(_Environment);            SAMPLER(sampler_Environment);
 
             CBUFFER_START(UnityPerMaterial)
             float4 _MainTex_ST;
             half4 _BaseColor;
             float4 _WaveA,_WaveB,_WaveC,_WaveD;
 			float4 _WaterFogColor;
-            float _WaterFogDensity;
+            float _WaterFogDensity,_Depth;
             CBUFFER_END
 
             void InitializeInputData(Varyings input, half3 normalTS, out SimpleInputData inputData)
@@ -88,8 +91,8 @@ Shader "URPPractice/Flow/Water"
                 half3 viewDirWS = SafeNormalize(input.viewDirWS);
                 float sgn = input.tangentWS.w;      // should be either +1 or -1
                 float3 bitangent = sgn * cross(input.normalWS.xyz, input.tangentWS.xyz);
-                inputData.normalWS = TransformTangentToWorld(normalTS, half3x3(input.tangentWS.xyz, bitangent.xyz, input.normalWS.xyz));
-                inputData.normalWS = NormalizeNormalPerPixel(inputData.normalWS);
+                inputData.normalWS = normalize(TransformTangentToWorld(normalTS, half3x3(input.tangentWS.xyz, bitangent.xyz, input.normalWS.xyz)));
+                //inputData.normalWS = NormalizeNormalPerPixel(inputData.normalWS);
                 inputData.viewDirectionWS = viewDirWS;
             }
 
@@ -147,6 +150,8 @@ Shader "URPPractice/Flow/Water"
             Varyings WaterVertex(Attributes input)
             {
                 Varyings output = (Varyings)0;
+
+            	// ***************** Wave **************************
                 float3 gridPoint = input.positionOS.xyz;
 			    float3 tangent = float3(1, 0, 0);
 			    float3 binormal = float3(0, 0, 1);
@@ -156,7 +161,9 @@ Shader "URPPractice/Flow/Water"
                 //p += GerstnerWave(_WaveC, gridPoint, tangent, binormal);
                 //p += GerstnerWave(_WaveD, gridPoint, tangent, binormal);
                 float3 normal = normalize(cross(binormal,tangent));
-                VertexPositionInputs vertexInput = GetVertexPositionInputs(p.xyz);
+            	//float3 normal = float3(0,1,0);
+
+            	VertexPositionInputs vertexInput = GetVertexPositionInputs(p.xyz);
                 VertexNormalInputs normalInput = GetVertexNormalInputs(normal, float4(tangent,1));
 				half3 viewDirWS = GetWorldSpaceViewDir(vertexInput.positionWS);
                 output.uv = TRANSFORM_TEX(input.texcoord, _MainTex);
@@ -179,12 +186,8 @@ Shader "URPPractice/Flow/Water"
                 SimpleInputData inputData;
                 InitializeInputData(input, surfaceData.normalTS, inputData);
 
-				// To calculate the UV coordinates for sampling the depth buffer,
-                // divide the pixel location by the render target resolution
-                // _ScaledScreenParams.
+            	// ************** Water Fog *******************
                 float2 UV = input.positionCS.xy / _ScaledScreenParams.xy;
-
-                // Sample the depth from the Camera depth texture.
                 #if UNITY_REVERSED_Z
                     real depth = SampleSceneDepth(UV);
                 #else
@@ -195,16 +198,30 @@ Shader "URPPractice/Flow/Water"
                 //float waterDepth = UNITY_Z_0_FAR_FROM_CLIPSPACE(IN.positionHCS.z);
                 float waterDepth = LinearEyeDepth(lerp(UNITY_NEAR_CLIP_VALUE, 1, input.positionCS.z),_ZBufferParams);
                 float depthDifference = depth - waterDepth;
-            	//depthDifference/=20;
-
+            	depthDifference/=_Depth;
                 float4 backgroundColor = float4(SampleSceneColor(UV).xyz,1);
                 float fogFactor = exp2(-_WaterFogDensity * depthDifference);
 	            half3 color =lerp(_WaterFogColor, backgroundColor, fogFactor).xyz;
-                //half4 color = half4(depthDifference,depthDifference,depthDifference,0.1);
-                return half4(color,_BaseColor.a);
+
+				// ************** refraction & reflection ********************
+            	float3 ViewDirWS = GetWorldSpaceViewDir(input.positionWS);
+                float3 relectionDir = reflect(-ViewDirWS,input.normalWS);
+            	//float3 relectionDir = reflect(-ViewDirWS,normalize(float3(0,1,0)));
+            	half3 reflectionColor = SAMPLE_TEXTURECUBE(_Environment,sampler_Environment,relectionDir);
+            	float f0 = 0.3;
+            	float fresnel = f0+(1-f0)*pow(1-saturate(dot(ViewDirWS,inputData.normalWS)),5);
+            	color = lerp(backgroundColor,reflectionColor,fresnel);
+            	
+				
+            	//half4 color = half4(depthDifference,depthDifference,depthDifference,0.1);
+            	//return half4(input.normalWS,_BaseColor.a);
+                //return half4(color,_BaseColor.a);
+                //return half4(reflectionColor,_BaseColor.a);
                 //return float4(depthDifference,depthDifference,depthDifference,1);
             	//return float4(fogFactor,fogFactor,fogFactor,1);
-                //return float4(surfaceData.albedo,);
+                //return float4(surfaceData.albedo,_BaseColor.a);
+            	return float4(fresnel,fresnel,fresnel,_BaseColor.a);
+            	//return float4(ViewDirWS,_BaseColor.a);
             }
 
             ENDHLSL
